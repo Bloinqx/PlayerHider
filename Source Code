@@ -1,0 +1,94 @@
+# ============================== #
+#
+#   Player Hider v1.0 by Blinqx
+#
+# ============================== #
+
+options:
+# === Main Options ===
+	
+	# Change the main command
+	hidePlayersCmd: hideplayers
+	# Change command aliases
+	hidePlayersAliases: hp, hideplayer, hide
+	
+	# Change command for player to hide themselves (Just hides their player, doesn't act like vanish)
+	hideSelfCmd: hide
+	# Change personal hide aliases
+	hideSelfAliases: cloak, invis
+	# Permission to show player even if they hid themselves
+	hideShowPerm: skript.hidden.bypass
+
+	# Should players who are hiding all players be shown they are above their hotbar?
+	hidePlayersBar: true
+	hidePlayersBarMsg: &7You have players &bHidden # Only applicable if option above is set to true
+	
+	# Hide Self Bar Options
+	hideSelfBar: true
+	hideSelfBarMsg: &7You are &bHidden
+	
+	# No Permission Message
+	permDenied: &8• &7You lack permission for that
+	# Permission Node Prefix
+	permPrefix: skript # permission node will begin with this, ex: "skript.hideplayers"
+	
+	# Color Theme
+	aColor: &7 # Main text color
+	bColor: &b # Emphasis text color
+	
+	# Prefix that leads every message
+	hidePlayersPrefix: &8[&bPlayers&8]
+	
+	# If the player left while hidden or while players were hidden, should they still be when they rejoin?
+	hidePlayersRejoin: true
+	hideSelfRejoin: true
+	
+	
+# === Actual Skript ===
+
+function hide(p:player,type:string,bar:string,msg:string):
+	if {-hideplayers::%{_type}%::%{_p}%} is true:
+		if {_type} is "others":
+			hide all players from {_p}
+		if {_type} is "self":
+			loop all players:
+				if loop-player doesn't have permission "{@hideShowPerm}":
+					hide {_p} from loop-player
+		if {_bar} is "true":
+			while {-hideplayers::%{_type}%::%{_p}%} is true:
+				send action bar "%{_msg}%" to {_p}
+				wait 2 seconds
+
+on join:
+	if {@hidePlayersRejoin} is true:
+		hide(player,"others","{@hidePlayersBar}","{@hidePlayersBarMsg}")
+	if {@hideSelfRejoin} is true:
+		hide(player,"self","{@hideSelfBar}","{@hideSelfBarMsg}")
+
+command /{@hidePlayersCmd}:
+	aliases: {@hidePlayersAliases}
+	permission: {@permPrefix}.hideplayers
+	permission message: {@permDenied}
+	trigger:
+		if {-hideplayers::others::%player%} is not set:
+			set {-hideplayers::others::%player%} to true
+			send "{@hidePlayersPrefix} {@aColor}Players are now {@bColor}Hidden"
+			hide(player,"others","{@hidePlayersBar}","{@hidePlayersBarMsg}")
+		else:
+			delete {-hideplayers::others::%player%}
+			send "{@hidePlayersPrefix} {@aColor}Players are now {@bColor}Shown"
+			reveal all players to player	
+			
+command /{@hideSelfCmd}:
+	aliases: {@hideSelfAliases}
+	permission: {@permPrefix}.hide
+	permission message: {@permDenied}
+	trigger:
+		if {-hideplayers::self::%player%} is not set:
+			set {-hideplayers::self::%player%} to true
+			send "{@hidePlayersPrefix} {@aColor}You are now {@bColor}Hidden"
+			hide(player,"self","{@hideSelfBar}","{@hideSelfBarMsg}")
+		else:
+			delete {-hideplayers::self::%player%}
+			send "{@hidePlayersPrefix} {@aColor}You are now {@bColor}Shown"
+			reveal player to all players
